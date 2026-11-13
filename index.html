@@ -1,0 +1,107 @@
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gold Risk & Position Size v2.0 - Built by Vivek</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1115; color: #f1f5f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
+    .container { background: #181b21; padding: 24px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid #2a2f3a; }
+    h2 { color: #f59e0b; margin: 0 0 4px 0; font-size: 22px; }
+    .sub { color: #94a3b8; font-size: 13px; margin-bottom: 18px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 5px; font-weight: 500; }
+    input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f1115; color: #fff; font-size: 15px; box-sizing: border-box; }
+    input:focus { outline: none; border-color: #f59e0b; }
+    .card { background: #21252e; padding: 16px; border-radius: 12px; margin-top: 18px; border: 1px solid #2e3440; }
+    .lot-title { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lot-val { font-size: 30px; font-weight: 800; color: #f59e0b; margin: 4px 0; }
+    .note { font-size: 12px; color: #fbbf24; background: rgba(245, 158, 11, 0.12); padding: 8px 10px; border-radius: 6px; margin-top: 8px; display: none; }
+    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2e3440; font-size: 14px; }
+    .row:last-child { border-bottom: none; }
+    .loss { color: #f87171; font-weight: 700; }
+    .profit { color: #4ade80; font-weight: 700; }
+    .checklist { margin-top: 18px; background: #14171c; padding: 14px; border-radius: 12px; border: 1px solid #2a2f3a; }
+    .checklist h3 { margin: 0 0 10px 0; font-size: 14px; color: #e2e8f0; }
+    .chk-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; color: #cbd5e1; cursor: pointer; }
+    .chk-item input { width: 16px; height: 16px; accent-color: #22c55e; cursor: pointer; }
+    .badge { text-align: center; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 13px; margin-top: 10px; background: #2a2f3a; color: #94a3b8; }
+    .badge.ready { background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid #22c55e; }
+    .footer { text-align: center; margin-top: 18px; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>XAU/USD Risk Calculator v2.0</h2>
+    <div class="sub">Smart Lot Size, INR (₹) & Discipline Check</div>
+    <div class="grid">
+      <div><label>Balance (USD $)</label><input type="number" id="bal" value="21.27" oninput="calc()"></div>
+      <div><label>Risk per Trade (%)</label><input type="number" id="risk" value="2" oninput="calc()"></div>
+      <div><label>Stop Loss (Pips)</label><input type="number" id="sl" value="14.25" oninput="calc()"></div>
+      <div><label>Take Profit (Pips)</label><input type="number" id="tp" value="38.63" oninput="calc()"></div>
+    </div>
+    <div style="margin-top: 12px;">
+      <label>USD to INR Rate (₹)</label>
+      <input type="number" id="inr" value="94" oninput="calc()">
+    </div>
+    <div class="card">
+      <div class="lot-title">Recommended Broker Lot</div>
+      <div class="lot-val" id="lotOut">0.01 lots</div>
+      <div class="note" id="minNote"></div>
+      <div class="row"><span>Loss at Stop:</span><span class="loss" id="lossOut">-$0.00 (₹0)</span></div>
+      <div class="row"><span>Profit at Target:</span><span class="profit" id="profOut">+$0.00 (₹0)</span></div>
+      <div class="row"><span>Reward : Risk:</span><span style="font-weight:700;" id="rrOut">1 : 0.00</span></div>
+    </div>
+    <div class="checklist">
+      <h3>Pre-Trade Discipline Checklist</h3>
+      <label class="chk-item"><input type="checkbox" class="chk" onchange="checkReady()"> 15m Trend & 5m Setup Confirmed</label>
+      <label class="chk-item"><input type="checkbox" class="chk" onchange="checkReady()"> Stop Loss Placed at Swing High/Low</label>
+      <label class="chk-item"><input type="checkbox" class="chk" onchange="checkReady()"> Ready to Accept Loss Without Emotion</label>
+      <div class="badge" id="statusBadge">COMPLETE CHECKLIST BEFORE TRADING</div>
+    </div>
+    <div class="footer">Built by Vivek 🚀 | Disciplined XAU/USD Trader & AI Builder</div>
+  </div>
+  <script>
+    function calc() {
+      let bal = parseFloat(document.getElementById('bal').value) || 0;
+      let riskPct = parseFloat(document.getElementById('risk').value) || 0;
+      let sl = parseFloat(document.getElementById('sl').value) || 0;
+      let tp = parseFloat(document.getElementById('tp').value) || 0;
+      let inrRate = parseFloat(document.getElementById('inr').value) || 94;
+      let targetRiskUSD = (bal * riskPct) / 100;
+      let rawLot = sl > 0 ? targetRiskUSD / (sl * 10) : 0;
+      let finalLot = Math.floor(rawLot * 100) / 100;
+      let noteEl = document.getElementById('minNote');
+      if (finalLot < 0.01 && sl > 0) {
+        finalLot = 0.01;
+        let actualRiskUSD = 0.01 * sl * 10;
+        let actualRiskPct = bal > 0 ? ((actualRiskUSD / bal) * 100).toFixed(1) : 0;
+        noteEl.style.display = 'block';
+        noteEl.innerHTML = '⚠️ Minimum broker lot <b>0.01</b> applied. Actual risk: <b>$' + actualRiskUSD.toFixed(2) + ' (' + actualRiskPct + '%)</b>';
+      } else {
+        noteEl.style.display = 'none';
+      }
+      let actualLossUSD = finalLot * sl * 10;
+      let actualProfUSD = finalLot * tp * 10;
+      let rr = sl > 0 ? (tp / sl).toFixed(2) : '0.00';
+      document.getElementById('lotOut').innerText = finalLot.toFixed(2) + ' lots';
+      document.getElementById('lossOut').innerText = '-$' + actualLossUSD.toFixed(2) + ' (₹' + Math.round(actualLossUSD * inrRate) + ')';
+      document.getElementById('profOut').innerText = '+$' + actualProfUSD.toFixed(2) + ' (₹' + Math.round(actualProfUSD * inrRate) + ')';
+      document.getElementById('rrOut').innerText = '1 : ' + rr;
+    }
+    function checkReady() {
+      let boxes = document.querySelectorAll('.chk');
+      let allChecked = Array.from(boxes).every(b => b.checked);
+      let badge = document.getElementById('statusBadge');
+      if (allChecked) {
+        badge.className = 'badge ready';
+        badge.innerText = '✅ READY TO EXECUTE TRADE';
+      } else {
+        badge.className = 'badge';
+        badge.innerText = 'COMPLETE CHECKLIST BEFORE TRADING';
+      }
+    }
+    calc();
+  </script>
+</body>
+</html>
